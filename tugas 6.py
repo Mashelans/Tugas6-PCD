@@ -1,4 +1,4 @@
-
+```python
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -32,14 +32,16 @@ os.makedirs("hasil_5x5", exist_ok=True)
 
 
 # ==================================================
-# 3. FUNGSI UNTUK MELAKUKAN FILTER
+# 3. FUNGSI FILTER LPF DAN HPF SOBEL
 # ==================================================
 
 def proses_filter(img, kernel):
 
-    # Low-Pass Filter (LPF)
+    # ------------------------------
+    # LOW-PASS FILTER (LPF)
+    # ------------------------------
 
-    # Mean Blur
+    # Average Blur
     blur = cv2.blur(img, (kernel, kernel))
 
     # Gaussian Blur
@@ -51,35 +53,50 @@ def proses_filter(img, kernel):
     median = cv2.medianBlur(img, kernel)
 
 
-    # High-Pass Filter (HPF) menggunakan Sobel
+    # ------------------------------
+    # HIGH-PASS FILTER (HPF)
+    # SOBEL X DAN SOBEL Y
+    # ------------------------------
 
-    # Sobel Derivative X
+    # Sobel X
     gx = cv2.Sobel(
-        img, cv2.CV_64F, 1, 0, ksize=kernel
+        img,
+        cv2.CV_64F,
+        1,
+        0,
+        ksize=kernel
     )
 
     sobel_x = cv2.convertScaleAbs(gx)
 
-    # Sobel Derivative Y
+    # Sobel Y
     gy = cv2.Sobel(
-        img, cv2.CV_64F, 0, 1, ksize=kernel
+        img,
+        cv2.CV_64F,
+        0,
+        1,
+        ksize=kernel
     )
 
     sobel_y = cv2.convertScaleAbs(gy)
 
-    # Sobel Magnitude
-    magnitude_raw = np.sqrt(gx**2 + gy**2)
 
-    magnitude = cv2.normalize(
-        magnitude_raw,
-        None,
-        0,
-        255,
-        cv2.NORM_MINMAX
-    ).astype(np.uint8)
+    # ------------------------------
+    # SOBEL MAGNITUDE
+    # ------------------------------
 
-    # Mengembalikan 7 gambar
-    hasil = [
+    # Menghitung kekuatan gradien
+    magnitude_raw = cv2.magnitude(
+        gx.astype(np.float32),
+        gy.astype(np.float32)
+    )
+
+    # Konversi ke citra 8-bit
+    # Nilai absolut, skala default 1, lalu dibatasi 0-255
+    magnitude = cv2.convertScaleAbs(magnitude_raw)
+
+    # Mengembalikan tujuh gambar
+    return [
         img,
         blur,
         gaussian,
@@ -88,8 +105,6 @@ def proses_filter(img, kernel):
         sobel_y,
         magnitude
     ]
-
-    return hasil
 
 
 # ==================================================
@@ -108,7 +123,7 @@ judul = [
 
 
 # ==================================================
-# 5. FUNGSI MENAMPILKAN DAN MENYIMPAN GAMBAR GABUNGAN
+# 5. FUNGSI MENYIMPAN GAMBAR GABUNGAN
 # ==================================================
 
 def simpan_gabungan(hasil, kernel, nama_output):
@@ -130,7 +145,7 @@ def simpan_gabungan(hasil, kernel, nama_output):
         axes[i].set_title(judul[i])
         axes[i].axis("off")
 
-    # Mematikan subplot kedelapan
+    # Mengosongkan subplot kedelapan
     axes[7].axis("off")
 
     fig.suptitle(
@@ -140,14 +155,14 @@ def simpan_gabungan(hasil, kernel, nama_output):
 
     plt.tight_layout()
 
-    # Menyimpan gambar gabungan
+    # Simpan gambar gabungan
     fig.savefig(
         nama_output,
         dpi=300,
         bbox_inches="tight"
     )
 
-    # Menampilkan gambar gabungan
+    # Tampilkan gambar gabungan
     plt.show()
 
     plt.close(fig)
@@ -159,7 +174,6 @@ def simpan_gabungan(hasil, kernel, nama_output):
 
 hasil_3x3 = proses_filter(img, 3)
 
-# Nama file individual khusus kernel 3x3
 nama_file_3x3 = [
     "gambar_asli.png",
     "blur_3x3.png",
@@ -170,7 +184,7 @@ nama_file_3x3 = [
     "magnitude_3x3.png"
 ]
 
-# Menyimpan 7 gambar individual
+# Simpan tujuh gambar individual
 for i in range(7):
 
     path = os.path.join(
@@ -180,19 +194,12 @@ for i in range(7):
 
     cv2.imwrite(path, hasil_3x3[i])
 
-# Menyimpan satu gambar gabungan 3x3
+# Simpan gambar gabungan 3x3
 simpan_gabungan(
     hasil_3x3,
     3,
     "hasil_3x3/gabungan_3x3.png"
 )
-
-# Menampilkan gambar individual menggunakan OpenCV
-for i in range(7):
-    cv2.imshow(
-        "3x3 - " + judul[i],
-        hasil_3x3[i]
-    )
 
 
 # ==================================================
@@ -201,8 +208,27 @@ for i in range(7):
 
 hasil_5x5 = proses_filter(img, 5)
 
-# Hanya menyimpan satu gambar gabungan 5x5
-# Tidak menyimpan gambar 5x5 secara individual
+nama_file_5x5 = [
+    "gambar_asli.png",
+    "blur_5x5.png",
+    "gaussian_5x5.png",
+    "median_5x5.png",
+    "sobel_x_5x5.png",
+    "sobel_y_5x5.png",
+    "magnitude_5x5.png"
+]
+
+# Simpan tujuh gambar individual
+for i in range(7):
+
+    path = os.path.join(
+        "hasil_5x5",
+        nama_file_5x5[i]
+    )
+
+    cv2.imwrite(path, hasil_5x5[i])
+
+# Simpan gambar gabungan 5x5
 simpan_gabungan(
     hasil_5x5,
     5,
@@ -218,57 +244,53 @@ print("\n========== ANALISIS HASIL FILTER ==========")
 
 print("""
 1. Gambar asli
-   Gambar grayscale menjadi acuan untuk membandingkan
-   hasil dari setiap metode filter.
+   Gambar grayscale digunakan sebagai acuan
+   untuk membandingkan hasil setiap metode filter.
 
 2. LPF - Blur
-   Merata-ratakan nilai piksel di sekitarnya sehingga
-   gambar menjadi lebih halus. Kernel 5x5 biasanya
-   menghasilkan penghalusan lebih kuat dibandingkan 3x3.
+   Merata-ratakan nilai piksel di sekitarnya
+   sehingga gambar menjadi lebih halus.
 
 3. LPF - Gaussian Blur
-   Menghaluskan gambar menggunakan pembobotan Gaussian.
-   Kernel 5x5 biasanya mengurangi detail kecil lebih banyak
-   daripada kernel 3x3.
+   Menghaluskan gambar menggunakan pembobotan
+   Gaussian untuk mengurangi detail kecil.
 
 4. LPF - Median Blur
-   Mengganti nilai piksel dengan median dari lingkungan
-   sekitarnya. Kernel 5x5 mempertimbangkan area lebih luas
-   dibandingkan kernel 3x3.
+   Mengganti nilai piksel dengan median dari
+   lingkungan sekitarnya.
 
 5. HPF - Sobel X
-   Mendeteksi perubahan intensitas pada arah X.
-   Tepi vertikal cenderung terlihat lebih jelas.
+   Mendeteksi perubahan intensitas arah horizontal
+   sehingga tepi vertikal cenderung terlihat jelas.
 
 6. HPF - Sobel Y
-   Mendeteksi perubahan intensitas pada arah Y.
-   Tepi horizontal cenderung terlihat lebih jelas.
+   Mendeteksi perubahan intensitas arah vertikal
+   sehingga tepi horizontal cenderung terlihat jelas.
 
 7. HPF - Magnitude
-   Menggabungkan kekuatan gradien X dan Y untuk
-   menunjukkan tepi dari berbagai arah.
+   Menggabungkan gradien Sobel X dan Y untuk
+   menunjukkan kekuatan tepi dari berbagai arah.
+   Hasil dikonversi ke citra 8-bit menggunakan
+   cv2.convertScaleAbs().
 
 8. Perbandingan kernel 3x3 dan 5x5
    Kernel 3x3 menggunakan area yang lebih kecil,
    sedangkan kernel 5x5 menggunakan area lebih luas.
-   Pada LPF, kernel yang lebih besar biasanya memberikan
-   penghalusan lebih kuat. Pada Sobel, ukuran kernel
-   memengaruhi respons terhadap tepi dan detail gambar.
+   Ukuran kernel memengaruhi penghalusan gambar
+   dan respons deteksi tepi.
 
 Kesimpulan:
-   LPF digunakan untuk menghaluskan gambar, sedangkan
-   Sobel digunakan untuk mendeteksi tepi. Perbandingan
-   kernel 3x3 dan 5x5 menunjukkan pengaruh ukuran kernel
-   terhadap hasil pengolahan citra.
+   LPF digunakan untuk menghaluskan gambar,
+   sedangkan Sobel digunakan untuk mendeteksi tepi.
+   Hasil kedua ukuran kernel dapat dibandingkan
+   melalui gambar gabungan yang disimpan terpisah.
 """)
 
-print("\nSemua proses selesai!")
-print("\nFolder hasil_3x3:")
-print("- gabungan_3x3.png")
-print("- 7 file gambar individual")
-
-print("\nFolder hasil_5x5:")
-print("- gabungan_5x5.png saja")
+print("\nSemua proses selesai.")
+print("Folder hasil_3x3 berisi tujuh gambar individual")
+print("dan satu gambar gabungan.")
+print("Folder hasil_5x5 berisi tujuh gambar individual")
+print("dan satu gambar gabungan.")
 
 
 # ==================================================
@@ -277,3 +299,5 @@ print("- gabungan_5x5.png saja")
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+```
+
